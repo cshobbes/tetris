@@ -5,6 +5,9 @@ import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
 import android.support.annotation.NonNull;
+import android.support.v4.view.GestureDetectorCompat;
+import android.util.Log;
+import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
@@ -17,10 +20,13 @@ import java.util.Random;
  * Created by csong on 10/21/16.
  */
 
-public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
+public class GamePanel extends SurfaceView implements SurfaceHolder.Callback, GestureDetector.OnGestureListener {
     // dimensions of the grid in blocks
     public static final int GRID_WIDTH = 10;
     public static final int GRID_HEIGHT = 20;
+
+    private static final String TAG = GamePanel.class.getSimpleName();
+    private static final int FLING_THRESHOLD = 1000;
 
     private List<Block> blocks;
     private Block activeBlock;
@@ -29,6 +35,7 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
     private int fallSpeed;
     private int frameCounter;
     private MainThread mainThread;
+    private GestureDetectorCompat gestureDetector;
 
     public GamePanel(Context context) {
         super(context);
@@ -41,6 +48,8 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
         mainThread = new MainThread(getHolder(), this);
         setFocusable(true);
         blocks = new ArrayList<>((GRID_HEIGHT * GRID_WIDTH) / 4);
+
+        gestureDetector = new GestureDetectorCompat(context, this);
     }
 
     @Override
@@ -78,7 +87,10 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
 
     @Override
     public boolean onTouchEvent(MotionEvent event) {
-        activeBlock.rotate();
+//        activeBlock.rotate();
+        if (gestureDetector.onTouchEvent(event)) {
+            return true;
+        }
         return super.onTouchEvent(event);
     }
 
@@ -104,6 +116,44 @@ public class GamePanel extends SurfaceView implements SurfaceHolder.Callback {
 
         drawGrid(canvas);
     }
+
+    // region GestureDetector callbacks
+    @Override
+    public boolean onDown(MotionEvent motionEvent) {
+        return true;
+    }
+
+    @Override
+    public void onShowPress(MotionEvent motionEvent) { }
+
+    @Override
+    public boolean onSingleTapUp(MotionEvent motionEvent) {
+        activeBlock.rotate();
+        return true;
+    }
+
+    @Override
+    public boolean onScroll(MotionEvent motionEvent, MotionEvent motionEvent1, float v, float v1) {
+        return false;
+    }
+
+    @Override
+    public void onLongPress(MotionEvent motionEvent) { }
+
+    @Override
+    public boolean onFling(MotionEvent event1, MotionEvent event2, float velocityX, float velocityY) {
+        Log.d(TAG, "onFling: " + event1.toString() + event2.toString());
+        if (Math.abs(velocityX) > FLING_THRESHOLD) {
+            if (velocityX < 0) {    // left swipe
+
+            } else {    // right swipe
+
+            }
+        }
+        return true;
+    }
+
+    // endregion
 
     private Block generateNewBlock() {
         Random random = new Random();
